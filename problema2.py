@@ -389,11 +389,10 @@ def executar(arquivo, arquivo_saida, log=print):
 
         log("Formatando estilos...")
         formatarEstilo(planilha_nova, celulas, len(dados))
-
-        log("Salvando em: %s" % os.path.basename(arquivo))
     except Exception as e:
         return False, str(e)
 
     log("Encerrando...")
     encerrar(workbook, app, arquivo_saida)
+    log("Salvando em: %s" % os.path.basename(arquivo))
     return True, arquivo_saida

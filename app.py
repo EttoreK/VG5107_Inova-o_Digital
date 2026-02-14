@@ -32,7 +32,7 @@ class App(ctk.CTk):
 
         # Criação das telas com base nas classes
         self.telas = {}
-        for t in (Menu, Resolusao):
+        for t in (Menu, Resolucao):
             nomeTela = t.__name__
             tela = t(parent=self.container, controller=self) # inicia as classes
             self.telas[nomeTela] = tela
@@ -53,10 +53,10 @@ class App(ctk.CTk):
 
     # Seleção entre os 3 problemas possíveis
     def escolherProblema(self, problema, tipo):
-        """Guarda a escolha e troca para tela Resolusao"""
+        """Guarda a escolha e troca para tela Resolucao"""
         self.problema = problema
         self.arqTipo = tipo
-        self.escolherTela("Resolusao")
+        self.escolherTela("Resolucao")
 
 # Classe/Tela para escolher o problema
 class Menu(ctk.CTkFrame):
@@ -91,7 +91,7 @@ class Menu(ctk.CTkFrame):
         self.btnP3.pack(pady=10)
 
 # Classe/Tela para cchamar o script que resolve e conversar com o usuário
-class Resolusao(ctk.CTkFrame):
+class Resolucao(ctk.CTkFrame):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
@@ -142,6 +142,27 @@ class Resolusao(ctk.CTkFrame):
         self.btnCopiar.place(x=228, y=160)
 
         self.logar("Aguardando arquivo...")
+
+    # Chama a tela de menu
+    def vaoltarMenu(self):
+        """Limpa o log e volta para o Menu"""
+        self.limparLog()
+        self.controller.escolherTela("Menu")
+
+    # Limpa o log
+    def limparLog(self):
+        """Deleta todo conteúdo da caixe de log"""
+        self.txtboxLog.configure(state="normal")
+        self.txtboxLog.delete("0.0", "end") # deleta o log atual
+        self.txtboxLog.configure(state="disabled")
+
+    # Copia todo o texto da caixa de log
+    def copiarLog(self):
+        """Passa o log para a área de transferência"""
+        texto = self.txtboxLog.get("0.0", "end") # pega do tudo
+        self.clipboard_clear() # limpa a área de transferência
+        self.clipboard_append(texto) # adiciona à área de transferência
+        self.logar("Log copiado")
     
     # (Re)Exibe a tela de resolução para limpar o log do processo anterior
     def mostrarTela(self):
@@ -191,6 +212,9 @@ class Resolusao(ctk.CTkFrame):
             self.labelArq.configure(text=("...%s" % os.path.basename(arquivo)), text_color="gray")
             self.logar("Selecionado: %s" % os.path.basename(arquivo))
 
+            if self.controller.problema.__name__ == "problema2":
+                arquivoSaida = arquivo # salva no próprio arquivo
+            else:
                 # Padrões de saída, nome sempre igual e saída sempre excel
                 extensao = ".xlsx"
                 nomePadrao = "Relatório_" + os.path.splitext(os.path.basename(self.arqDir))[0]

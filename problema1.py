@@ -187,7 +187,7 @@ def enfeitarSaida(dados_final, colunas, caminho_salvar):
                 pass
         
         # Excluí tudo que  não for a planilha relatório
-        for planilha in wb.sheetsif:
+        for planilha in wb.sheets:
             if planilha.name != nome_planilha: planilha.delete()
         
         # Salva e fecha

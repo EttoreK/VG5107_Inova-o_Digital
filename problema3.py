@@ -145,7 +145,7 @@ def enfeitarSaida(planilha_ezmtp, caminho_salvar):
                 pass
         
         # Excluí tudo que não for a planilha relatório
-        for planilha in wb.sheetsif:
+        for planilha in wb.sheets:
             if planilha.name != nome_planilha: planilha.delete()
         
         wb.save(caminho_salvar) # salva
