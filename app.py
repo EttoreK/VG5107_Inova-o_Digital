@@ -3,6 +3,8 @@ import customtkinter as ctk # aplicativo
 import os # controle de arquivos do sistema
 
 # imports dos arquivos criados para cada problema
+import problema1 # pdf
+import problema2 # tratamento
 import problema3 # melt
 
 # Configurações de tema do aplicativo
@@ -18,20 +20,49 @@ class App(ctk.CTk):
         self.geometry("256x256") # tamanho da janela
         self.resizable(False, False) # se é redimensionávvel
 
+        # Atributos para determinar as ações de algumas funções
+        self.arqTipo = ""
+        self.problema = None
+
         # Configurações das telas do aplicativo
         self.container = ctk.CTkFrame(self) 
         self.container.pack(fill="both", expand=True) # preenche toda a janela om a tela
+        self.container.grid_rowconfigure(0, weight=1) # 100% de preenchimento
+        self.container.grid_columnconfigure(0, weight=1) # 100% de preenchimento
 
-        self.tela = Resolucao(parent=self.container)
-        self.tela.pack(fill="both", expand=True)
+        # Criação das telas com base nas classes
+        self.telas = {}
+        for t in (Menu, Resolucao):
+            nomeTela = t.__name__
+            tela = t(parent=self.container, controller=self) # inicia as classes
+            self.telas[nomeTela] = tela
+            tela.grid(row=0, column=0, sticky="nsew") #1 linha 1 coluna norte-sul-leste-oeste
+
+        self.escolherTela("Menu") # tela inicial Menu
+
+    # Altera a tela exibida
+    def escolherTela(self, nomeTela):
+        """Exibe a tela escolhida"""
+        tela = self.telas[nomeTela]
         
-# Classe/Tela para cchamar o script que resolve e conversar com o usuário
-class Resolucao(ctk.CTkFrame):
-    def __init__(self, paren):
+        # Tratamento se for de Resolucao para resolucao, só reinicia a tela
+        if hasattr(tela, "mostrarTela"):
+            tela.mostrarTela()
+
+        tela.tkraise() # exibe a tela
+
+    # Seleção entre os 3 problemas possíveis
+    def escolherProblema(self, problema, tipo):
+        """Guarda a escolha e troca para tela Resolucao"""
+        self.problema = problema
+        self.arqTipo = tipo
+        self.escolherTela("Resolucao")
+
+# Classe/Tela para escolher o problema
+class Menu(ctk.CTkFrame):
+    def __init__(self, parent, controller):
         super().__init__(parent)
-        self.problema_ativo = None
-        self.tipo_arquivo = ""
-        self.arqDir = ""
+        self.controller = controller
 
         # Título escrito dentro da tela
         self.titulo = ctk.CTkLabel(
@@ -44,20 +75,36 @@ class Resolucao(ctk.CTkFrame):
         self.btnP1 = ctk.CTkButton(
             self, text="Problema 1", 
             # lambda para executar só depois de clicado
-            command=lambda: self.rodar(problema3, "pdf"))
+            command=lambda: controller.escolherProblema(problema1, "pdf"))
         self.btnP1.pack(pady=10)
 
         self.btnP2 = ctk.CTkButton(
             self, text="Problema 2", 
             # lambda para executar só depois de clicado
-            command=lambda: self.rodar(problema3, "excel"))
+            command=lambda: controller.escolherProblema(problema2, "excel"))
         self.btnP2.pack(pady=10)
         
         self.btnP3 = ctk.CTkButton(
             self, text="Problema 3", 
             # lambda para executar só depois de clicado
-            command=lambda: self.rodar(problema3, "excel"))
+            command=lambda: controller.escolherProblema(problema3, "excel"))
         self.btnP3.pack(pady=10)
+
+# Classe/Tela para cchamar o script que resolve e conversar com o usuário
+class Resolucao(ctk.CTkFrame):
+    def __init__(self, parent, controller):
+        super().__init__(parent)
+        self.controller = controller
+        self.arqDir = ""
+
+        # Retorna ao Menu
+        self.btnVoltar = ctk.CTkButton(
+            self, text="Voltar", 
+            width=60, 
+            fg_color="gray", 
+            command=self.vaoltarMenu
+        )
+        self.btnVoltar.place(x=8, y=8)
 
         # Título escrito dentro da tela
         self.titulo = ctk.CTkLabel(
@@ -65,6 +112,13 @@ class Resolucao(ctk.CTkFrame):
             font=("Roboto", 16, "bold")
         )
         self.titulo.pack(pady=(42, 10))
+
+        # Botão para escolher o arquivo
+        self.btnArq = ctk.CTkButton(
+            self, text="Escolher Arquivo", 
+            command=self.escolherArquivo
+        )
+        self.btnArq.pack(pady=10)
 
         # Acompanhamento do arquivo selecionado
         self.labelArq = ctk.CTkLabel(
@@ -77,8 +131,22 @@ class Resolucao(ctk.CTkFrame):
         self.txtboxLog = ctk.CTkTextbox(self, width=240, height=80)
         self.txtboxLog.pack(pady=10)
         self.txtboxLog.configure(state="disabled") # não permite ninguém alem do sistema escrever
-    
+
         self.logar("Aguardando arquivo...")
+    
+    # (Re)Exibe a tela de resolução para limpar o log do processo anterior
+    def mostrarTela(self):
+        """Limpa o log e o arquivo escolhido ao reentrar na tela"""
+        self.arqDir = ""
+        self.txtboxLog.delete("0.0", "end") # apaga tudo
+        self.labelArq.configure(text="Nenhum arquivo escolhido", text_color="gray")
+        self.btnArq.configure(state="normal")
+        self.btnVoltar.configure(state="normal")
+        
+        # Atualiza o texto dependendo do tipo escolhido
+        tipo = self.controller.arqTipo.upper()
+        self.btnArq.configure(text=("Escolher  %s" % tipo))
+        self.logar("Aguardando arquivo %s..." % tipo)
     
     # Escreve para o usuário ver em qual parte o processo está
     def logar(self, mensagem):
@@ -92,9 +160,11 @@ class Resolucao(ctk.CTkFrame):
     # Usuário escolhe o arquivo de entrada e local de saída
     def escolherArquivo(self):
         """Pega o arquivo e local de salvar"""
+        tipo = self.controller.arqTipo
+        arquivo = ""
         
         # Define o tipo de arquivo para ser escolhido
-        if self.tipo_arquivo == "excel":
+        if tipo == "excel":
             arquivo = ctk.filedialog.askopenfilename(filetypes=[("Excel", "*.xlsx")])
         else:
             arquivo = ctk.filedialog.askopenfilename(filetypes=[("PDF", "*.pdf")])
@@ -128,11 +198,12 @@ class Resolucao(ctk.CTkFrame):
         """Executa uma soloução para o problema escolhido"""
         # Evita que o código quebre ou trave
         self.btnArq.configure(state="disabled")
+        self.btnVoltar.configure(state="disabled")
         self.update()
 
         # Verifica se o módulo foi importado, existe e pode ser chamado
         try:
-            modulo = self.problema_ativo
+            modulo = self.controller.problema
             if not modulo:
                 self.logar("Erro: Módulo não encontrado.")
                 return
@@ -152,6 +223,7 @@ class Resolucao(ctk.CTkFrame):
         # Libera para tentar novvamente 
         finally:
             self.btnArq.configure(state="normal")
+            self.btnVoltar.configure(state="normal")
 
 # Classe main, chama o app
 if __name__ == "__main__":
