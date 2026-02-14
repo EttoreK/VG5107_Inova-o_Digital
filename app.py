@@ -32,7 +32,7 @@ class App(ctk.CTk):
 
         # Criação das telas com base nas classes
         self.telas = {}
-        for t in (Menu, Resolucao):
+        for t in (Menu, Resolusao):
             nomeTela = t.__name__
             tela = t(parent=self.container, controller=self) # inicia as classes
             self.telas[nomeTela] = tela
@@ -53,10 +53,10 @@ class App(ctk.CTk):
 
     # Seleção entre os 3 problemas possíveis
     def escolherProblema(self, problema, tipo):
-        """Guarda a escolha e troca para tela Resolucao"""
+        """Guarda a escolha e troca para tela Resolusao"""
         self.problema = problema
         self.arqTipo = tipo
-        self.escolherTela("Resolucao")
+        self.escolherTela("Resolusao")
 
 # Classe/Tela para escolher o problema
 class Menu(ctk.CTkFrame):
@@ -91,7 +91,7 @@ class Menu(ctk.CTkFrame):
         self.btnP3.pack(pady=10)
 
 # Classe/Tela para cchamar o script que resolve e conversar com o usuário
-class Resolucao(ctk.CTkFrame):
+class Resolusao(ctk.CTkFrame):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
@@ -131,6 +131,15 @@ class Resolucao(ctk.CTkFrame):
         self.txtboxLog = ctk.CTkTextbox(self, width=240, height=80)
         self.txtboxLog.pack(pady=10)
         self.txtboxLog.configure(state="disabled") # não permite ninguém alem do sistema escrever
+        
+        # Botão para copíar o log
+        self.btnCopiar = ctk.CTkButton(
+            self, text="⎘", 
+            width=10, height=10, 
+            fg_color="gray", hover_color="black",
+            command=self.copiarLog
+        )
+        self.btnCopiar.place(x=228, y=160)
 
         self.logar("Aguardando arquivo...")
     
@@ -142,6 +151,13 @@ class Resolucao(ctk.CTkFrame):
         self.labelArq.configure(text="Nenhum arquivo escolhido", text_color="gray")
         self.btnArq.configure(state="normal")
         self.btnVoltar.configure(state="normal")
+
+        # Muda o título pada cada problema
+        self.titulo.configure(
+            text=(
+                "Resolução do %s" % self.controller.problema.__name__.capitalize()
+            )
+        )
         
         # Atualiza o texto dependendo do tipo escolhido
         tipo = self.controller.arqTipo.upper()
@@ -175,17 +191,17 @@ class Resolucao(ctk.CTkFrame):
             self.labelArq.configure(text=("...%s" % os.path.basename(arquivo)), text_color="gray")
             self.logar("Selecionado: %s" % os.path.basename(arquivo))
 
-            # Padrões de saída, nome sempre igual e saída sempre excel
-            extensao = ".xlsx"
-            nomePadrao = "Relatório_" + os.path.splitext(os.path.basename(self.arqDir))[0]
+                # Padrões de saída, nome sempre igual e saída sempre excel
+                extensao = ".xlsx"
+                nomePadrao = "Relatório_" + os.path.splitext(os.path.basename(self.arqDir))[0]
 
-            # Pergunta aonde salvar
-            arquivoSaida = ctk.filedialog.asksaveasfilename(
-                defaultextension=extensao,
-                initialfile=nomePadrao,
-                filetypes=[("Excel", "*.xlsx")],
-                title="Escolha onde salvar o relatório"
-            )
+                # Pergunta aonde salvar
+                arquivoSaida = ctk.filedialog.asksaveasfilename(
+                    defaultextension=extensao,
+                    initialfile=nomePadrao,
+                    filetypes=[("Excel", "*.xlsx")],
+                    title="Escolha onde salvar o relatório"
+                )
 
             # Se tem saída, roda a resolução
             if arquivoSaida:
