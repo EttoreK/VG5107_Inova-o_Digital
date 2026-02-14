@@ -21,11 +21,11 @@ pip install pandas openpyxl xlwings nuitka zstandard camelot-py[all] customtkint
 
 # 3. Como Instalar
 
-No mundo ideal:
+No mundo ideal (Não é possível no GitHub):
 * Baixe o `app.exe` deste repositório, ele está no diretório `dist`;
 * Execute o app.exe.
   
-Caso haja algum problema na execução:
+Como foi criado um único arquivo, com `--onefile`, o tamanho total do arquivo ultrapassa 300Mb, por isso é necessário gerar o arquivo da seguinte forma:
 
 ## 3.1 Use o terminal `Git Bash` para:
 
